@@ -395,3 +395,98 @@ docs/
 The Copilot instructions file contains stable project-wide rules.
 
 Page-specific and feature-specific implementation details should be documented only after those decisions are made.
+
+## Design System Rules
+
+The application must follow a warm, natural, modern, and spacious visual language.
+
+### Visual Direction
+
+- Use olive green as the primary action color.
+- Use terracotta as a secondary accent color.
+- Use a warm off-white page background.
+- Use white surfaces for cards, forms, and panels.
+- Use warm dark gray instead of pure black for primary text.
+- Prefer subtle borders and light shadows.
+- Avoid overly decorative, rustic, neon, glassmorphism, or heavily animated interfaces.
+- Food imagery should remain visually prominent.
+
+### Design Tokens
+
+Use the shared CSS custom properties defined in:
+
+```text
+src/styles/tokens.css
+```
+
+Do not duplicate token values inside component CSS files.
+
+Do not introduce arbitrary colors, spacing values, radii, or shadows when an existing token is suitable.
+
+### CSS Units
+
+- Use `rem` for typography, spacing, component sizing, and most border radii.
+- Use `%`, `fr`, `minmax()`, `min()`, `max()`, and `clamp()` for fluid layouts.
+- Use `px` mainly for thin borders and small visual details.
+- Do not create fixed page layouts with large pixel widths.
+- Use `100dvh` instead of `100vh` for full-height application layouts when appropriate.
+- Use `aspect-ratio` for recipe images instead of fixed image heights.
+- Use `min-width: 0` on flexible Grid or Flex children when overflow may occur.
+
+### Responsive Design
+
+- Build mobile, tablet, and desktop layouts.
+- Do not design for specific device brands.
+- Add breakpoints where the layout stops working naturally.
+- Treat `64rem`, `48rem`, and `30rem` only as initial references.
+- The desktop layout may show a permanent sidebar.
+- The mobile layout must not reserve permanent horizontal space for the sidebar.
+- Recipe grids should use fluid columns with `repeat()`, `auto-fit` or `auto-fill`, and `minmax()` where appropriate.
+- Avoid horizontal scrolling unless the content genuinely requires it.
+
+### Typography
+
+- Use the system font stack from the shared tokens.
+- Do not add a font package or remote font without approval.
+- Use `clamp()` for large page headings when fluid scaling improves the layout.
+- Prefer font weights `400`, `500`, and `600`.
+- Use `700` sparingly.
+
+### Components
+
+Cards should generally use:
+
+- White surface
+- Thin border
+- Large radius token
+- Subtle shadow
+- Clear hover and focus states
+- `16 / 10` recipe image aspect ratio where applicable
+
+Buttons should support:
+
+- Primary
+- Secondary
+- Danger
+
+Inputs, selects, and textareas should:
+
+- Fill their available width when appropriate
+- Use shared border and radius tokens
+- Have visible keyboard focus styles
+- Avoid relying only on color to communicate errors
+
+### Accessibility and Motion
+
+- Preserve visible focus indicators.
+- Ensure interactive controls are keyboard accessible.
+- Use semantic HTML elements.
+- Do not communicate state by color alone.
+- Keep animations short and subtle.
+- Respect `prefers-reduced-motion` when meaningful motion is introduced.
+
+### Icons
+
+- Do not install an icon library without approval.
+- Prefer small local SVG components when only a few icons are needed.
+- Reconsider an icon dependency only if repeated icon usage becomes substantial.
