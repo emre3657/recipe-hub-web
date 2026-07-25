@@ -6,13 +6,24 @@ interface RecipeCardProps {
 }
 
 function RecipeCard({ recipe }: RecipeCardProps) {
+  const ratingLabel =
+    recipe.rating === null ? "Not rated" : `★ ${recipe.rating.toFixed(1)}`;
+
   return (
     <article className={styles.card}>
-      <img
-        className={styles.image}
-        src={recipe.imageUrl}
-        alt={`Dish photo for ${recipe.title}`}
-      />
+      {recipe.imageUrl ? (
+        <img
+          className={styles.image}
+          src={recipe.imageUrl}
+          alt={`Dish photo for ${recipe.title}`}
+        />
+      ) : (
+        <div
+          className={styles.imagePlaceholder}
+          role="img"
+          aria-label={`No image available for ${recipe.title}`}
+        />
+      )}
 
       <div className={styles.content}>
         <div className={styles.metaRow}>
@@ -21,7 +32,7 @@ function RecipeCard({ recipe }: RecipeCardProps) {
         </div>
 
         <h2 className={styles.title}>{recipe.title}</h2>
-        <p className={styles.rating}>★ {recipe.rating.toFixed(1)}</p>
+        <p className={styles.rating}>{ratingLabel}</p>
       </div>
     </article>
   );

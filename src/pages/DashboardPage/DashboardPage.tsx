@@ -1,54 +1,46 @@
 import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import RecipeGrid from "../../components/RecipeGrid/RecipeGrid";
-import type { RecipePreview } from "../../types/recipe";
+import { db } from "../../database/db";
+import { RECIPE_CATEGORIES, type RecipePreview } from "../../types/recipe";
 import styles from "./DashboardPage.module.css";
-
-const sampleRecipes: RecipePreview[] = [
-  {
-    id: "creamy-carbonara",
-    title: "Creamy Carbonara",
-    category: "Main course",
-    durationMinutes: 30,
-    rating: 4.8,
-    imageUrl:
-      "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "chicken-curry",
-    title: "Chicken Curry",
-    category: "Main course",
-    durationMinutes: 45,
-    rating: 4.6,
-    imageUrl:
-      "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "greek-salad",
-    title: "Greek Salad",
-    category: "Salad",
-    durationMinutes: 15,
-    rating: 4.4,
-    imageUrl:
-      "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "chocolate-brownies",
-    title: "Chocolate Brownies",
-    category: "Dessert",
-    durationMinutes: 40,
-    rating: 4.9,
-    imageUrl:
-      "https://images.unsplash.com/photo-1606312619070-d48b4c652a52?auto=format&fit=crop&w=900&q=80",
-  },
-];
 
 function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  const recipes = useLiveQuery(async () => {
+    const [storedRecipes, storedRatings] = await Promise.all([
+      db.recipes.toArray(),
+      db.ratings.toArray(),
+    ]);
+
+    return storedRecipes.map((recipe) => {
+      const recipeRatings = storedRatings.filter(
+        (rating) => rating.recipeId === recipe.id,
+      );
+      const averageRating =
+        recipeRatings.length > 0
+          ? recipeRatings.reduce((sum, rating) => sum + rating.value, 0) /
+            recipeRatings.length
+          : null;
+
+      return {
+        id: recipe.id,
+        title: recipe.title,
+        category: recipe.category,
+        durationMinutes: recipe.durationMinutes,
+        rating:
+          averageRating === null ? null : Number(averageRating.toFixed(1)),
+        imageUrl: recipe.imageUrl,
+        imageBlob: recipe.imageBlob,
+      } satisfies RecipePreview;
+    });
+  }, []);
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-  const filteredRecipes = sampleRecipes.filter((recipe) => {
+  const filteredRecipes = (recipes ?? []).filter((recipe) => {
     const normalizedRecipeTitle = recipe.title.toLowerCase();
     const normalizedRecipeCategory = recipe.category.toLowerCase();
     const categoryKey = normalizedRecipeCategory.replace(/\s+/g, "-");
@@ -70,6 +62,53 @@ function DashboardPage() {
     setSearchQuery("");
     setSelectedCategory("all");
   };
+
+  const isDatabaseEmpty = recipes?.length === 0;
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 || selectedCategory !== "all";
+
+  let content: React.ReactNode;
+
+  if (recipes === undefined) {
+    content = (
+      <div className={styles.emptyState}>
+        <h2 className={styles.emptyTitle}>Loading recipes...</h2>
+        <p className={styles.emptyDescription}>
+          Please wait while the recipe library loads.
+        </p>
+      </div>
+    );
+  } else if (isDatabaseEmpty) {
+    content = (
+      <div className={styles.emptyState}>
+        <h2 className={styles.emptyTitle}>No recipes available</h2>
+        <p className={styles.emptyDescription}>
+          Recipes will appear here after they are added.
+        </p>
+      </div>
+    );
+  } else if (filteredRecipes.length === 0) {
+    content = (
+      <div className={styles.emptyState}>
+        <h2 className={styles.emptyTitle}>No recipes found</h2>
+        <p className={styles.emptyDescription}>
+          Try changing the search or category filter to see more recipes.
+        </p>
+        {!hasActiveFilters ? null : (
+          <button
+            className={styles.clearButton}
+            type="button"
+            onClick={handleClearFilters}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+    );
+  } else {
+    content = <RecipeGrid recipes={filteredRecipes} />;
+  }
 
   return (
     <section className={styles.page} aria-labelledby="dashboard-title">
@@ -115,35 +154,25 @@ function DashboardPage() {
             onChange={(event) => setSelectedCategory(event.target.value)}
           >
             <option value="all">All categories</option>
-            <option value="breakfast">Breakfast</option>
-            <option value="main-course">Main course</option>
-            <option value="salad">Salad</option>
-            <option value="dessert">Dessert</option>
+            {RECIPE_CATEGORIES.map((category) => (
+              <option
+                key={category}
+                value={category.toLowerCase().replace(/\s+/g, "-")}
+              >
+                {category}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
-      <p className={styles.resultsSummary} role="status">
-        {resultsLabel}
-      </p>
-
-      {filteredRecipes.length === 0 ? (
-        <div className={styles.emptyState}>
-          <h2 className={styles.emptyTitle}>No recipes found</h2>
-          <p className={styles.emptyDescription}>
-            Try changing the search or category filter to see more recipes.
-          </p>
-          <button
-            className={styles.clearButton}
-            type="button"
-            onClick={handleClearFilters}
-          >
-            Clear filters
-          </button>
-        </div>
-      ) : (
-        <RecipeGrid recipes={filteredRecipes} />
+      {recipes !== undefined && !isDatabaseEmpty && (
+        <p className={styles.resultsSummary} role="status">
+          {resultsLabel}
+        </p>
       )}
+
+      {content}
     </section>
   );
 }
