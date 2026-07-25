@@ -81,11 +81,45 @@
   color: var(--color-text);
 }
 
-.input:focus-visible,
-.select:focus-visible,
-.primaryButton:focus-visible {
-  outline: 0.1875rem solid var(--color-primary);
-  outline-offset: 0.1875rem;
+.resultsSummary {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.emptyState {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 32rem;
+  padding: var(--space-8);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.emptyTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.emptyDescription {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+.clearButton {
+  width: fit-content;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.clearButton:hover,
+.clearButton:focus-visible {
+  background: var(--color-primary);
+  color: var(--color-surface);
 }
 
 @media (max-width: 48rem) {

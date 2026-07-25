@@ -1,3 +1,4 @@
+import { useState } from "react";
 import RecipeGrid from "../../components/RecipeGrid/RecipeGrid";
 import type { RecipePreview } from "../../types/recipe";
 import styles from "./DashboardPage.module.css";
@@ -42,6 +43,34 @@ const sampleRecipes: RecipePreview[] = [
 ];
 
 function DashboardPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredRecipes = sampleRecipes.filter((recipe) => {
+    const normalizedRecipeTitle = recipe.title.toLowerCase();
+    const normalizedRecipeCategory = recipe.category.toLowerCase();
+    const categoryKey = normalizedRecipeCategory.replace(/\s+/g, "-");
+
+    const matchesSearch =
+      normalizedSearchQuery.length === 0 ||
+      normalizedRecipeTitle.includes(normalizedSearchQuery) ||
+      normalizedRecipeCategory.includes(normalizedSearchQuery);
+
+    const matchesCategory =
+      selectedCategory === "all" || categoryKey === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const resultsLabel = `${filteredRecipes.length} ${filteredRecipes.length === 1 ? "recipe" : "recipes"}`;
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+  };
+
   return (
     <section className={styles.page} aria-labelledby="dashboard-title">
       <div className={styles.headerRow}>
@@ -70,6 +99,8 @@ function DashboardPage() {
             className={styles.input}
             type="search"
             placeholder="Search recipes by title or ingredient"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
           />
         </div>
 
@@ -80,9 +111,10 @@ function DashboardPage() {
           <select
             id="category-filter"
             className={styles.select}
-            defaultValue=""
+            value={selectedCategory}
+            onChange={(event) => setSelectedCategory(event.target.value)}
           >
-            <option value="">All categories</option>
+            <option value="all">All categories</option>
             <option value="breakfast">Breakfast</option>
             <option value="main-course">Main course</option>
             <option value="salad">Salad</option>
@@ -91,7 +123,27 @@ function DashboardPage() {
         </div>
       </div>
 
-      <RecipeGrid recipes={sampleRecipes} />
+      <p className={styles.resultsSummary} role="status">
+        {resultsLabel}
+      </p>
+
+      {filteredRecipes.length === 0 ? (
+        <div className={styles.emptyState}>
+          <h2 className={styles.emptyTitle}>No recipes found</h2>
+          <p className={styles.emptyDescription}>
+            Try changing the search or category filter to see more recipes.
+          </p>
+          <button
+            className={styles.clearButton}
+            type="button"
+            onClick={handleClearFilters}
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <RecipeGrid recipes={filteredRecipes} />
+      )}
     </section>
   );
 }
