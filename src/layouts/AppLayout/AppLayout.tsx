@@ -7,7 +7,10 @@ function AppLayout() {
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Recipe Hub</p>
-          <h1 className={styles.title}>Recipe Hub</h1>
+          <div className={styles.title}>Recipe Hub</div>
+        </div>
+        <div className={styles.headerMeta}>
+          <span className={styles.userBadge}>Guest</span>
         </div>
       </header>
 
@@ -17,8 +20,18 @@ function AppLayout() {
           <ul className={styles.navList}>
             <li>
               <NavLink className={styles.navLink} to="/">
-                Dashboard
+                Recipes
               </NavLink>
+            </li>
+            <li>
+              <button className={styles.navButton} type="button" disabled>
+                Favorites
+              </button>
+            </li>
+            <li>
+              <button className={styles.navButton} type="button" disabled>
+                My Recipes
+              </button>
             </li>
           </ul>
         </nav>

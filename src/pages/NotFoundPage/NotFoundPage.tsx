@@ -4,9 +4,9 @@ import styles from "./NotFoundPage.module.css";
 function NotFoundPage() {
   return (
     <section className={styles.page} aria-labelledby="not-found-title">
-      <h2 id="not-found-title" className={styles.title}>
+      <h1 id="not-found-title" className={styles.title}>
         Page not found
-      </h2>
+      </h1>
       <p className={styles.description}>
         The page you requested could not be found.
       </p>
