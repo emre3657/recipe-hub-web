@@ -1,3 +1,4 @@
+import useObjectUrl from "../../hooks/useObjectUrl";
 import styles from "./RecipeCard.module.css";
 import type { RecipePreview } from "../../types/recipe";
 
@@ -8,10 +9,17 @@ interface RecipeCardProps {
 function RecipeCard({ recipe }: RecipeCardProps) {
   const ratingLabel =
     recipe.rating === null ? "Not rated" : `★ ${recipe.rating.toFixed(1)}`;
+  const imageSrc = useObjectUrl(recipe.imageBlob);
 
   return (
     <article className={styles.card}>
-      {recipe.imageUrl ? (
+      {imageSrc ? (
+        <img
+          className={styles.image}
+          src={imageSrc}
+          alt={`Dish photo for ${recipe.title}`}
+        />
+      ) : recipe.imageUrl ? (
         <img
           className={styles.image}
           src={recipe.imageUrl}

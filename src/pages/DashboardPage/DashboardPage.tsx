@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useNavigate } from "react-router";
 import RecipeGrid from "../../components/RecipeGrid/RecipeGrid";
 import { db } from "../../database/db";
+import useUserSession from "../../hooks/useUserSession";
 import { RECIPE_CATEGORIES, type RecipePreview } from "../../types/recipe";
 import styles from "./DashboardPage.module.css";
 
 function DashboardPage() {
+  const navigate = useNavigate();
+  const { currentUser } = useUserSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -68,6 +72,14 @@ function DashboardPage() {
   const hasActiveFilters =
     searchQuery.trim().length > 0 || selectedCategory !== "all";
 
+  const handleAddRecipeClick = () => {
+    if (!currentUser) {
+      return;
+    }
+
+    navigate("/recipes/new");
+  };
+
   let content: React.ReactNode;
 
   if (recipes === undefined) {
@@ -123,9 +135,21 @@ function DashboardPage() {
           </p>
         </div>
 
-        <button className={styles.primaryButton} type="button">
-          Add Recipe
-        </button>
+        <div className={styles.headerActions}>
+          {!currentUser ? (
+            <p className={styles.inlineMessage}>
+              Select a user before adding a recipe.
+            </p>
+          ) : null}
+          <button
+            className={styles.primaryButton}
+            type="button"
+            disabled={!currentUser}
+            onClick={handleAddRecipeClick}
+          >
+            Add Recipe
+          </button>
+        </div>
       </div>
 
       <div className={styles.toolbar}>
