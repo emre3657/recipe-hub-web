@@ -48,9 +48,9 @@ function AppLayout() {
               </button>
             </li>
             <li>
-              <button className={styles.navButton} type="button" disabled>
+              <NavLink className={styles.navLink} to="/my-recipes">
                 My Recipes
-              </button>
+              </NavLink>
             </li>
           </ul>
         </nav>
