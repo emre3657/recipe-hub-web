@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import useObjectUrl from "../../hooks/useObjectUrl";
 import styles from "./RecipeCard.module.css";
 import type { RecipePreview } from "../../types/recipe";
@@ -39,7 +40,16 @@ function RecipeCard({ recipe }: RecipeCardProps) {
           <span className={styles.duration}>{recipe.durationMinutes} min</span>
         </div>
 
-        <h2 className={styles.title}>{recipe.title}</h2>
+        <h2 className={styles.title}>
+          <Link
+            className={styles.titleLink}
+            to={`/recipes/${recipe.id}`}
+            aria-label={`View ${recipe.title} recipe`}
+          >
+            {recipe.title}
+          </Link>
+        </h2>
+
         <p className={styles.rating}>{ratingLabel}</p>
       </div>
     </article>

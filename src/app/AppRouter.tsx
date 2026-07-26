@@ -3,6 +3,7 @@ import AppLayout from "../layouts/AppLayout/AppLayout";
 import AddRecipePage from "../pages/AddRecipePage/AddRecipePage";
 import DashboardPage from "../pages/DashboardPage/DashboardPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
+import RecipeDetailPage from "../pages/RecipeDetailPage/RecipeDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
       {
         path: "/recipes/new",
         element: <AddRecipePage />,
+      },
+      {
+        path: "/recipes/:recipeId",
+        element: <RecipeDetailPage />,
       },
       {
         path: "*",
