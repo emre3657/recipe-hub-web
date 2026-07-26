@@ -28,7 +28,7 @@
   line-height: 1.7;
 }
 
-.accessMessage {
+.statusCard {
   width: min(100%, var(--layout-max-width));
   margin-inline: auto;
   display: grid;

@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../database/db";
 import useObjectUrl from "../../hooks/useObjectUrl";
+import useUserSession from "../../hooks/useUserSession";
 import type { Recipe } from "../../types/recipe";
 import styles from "./RecipeDetailPage.module.css";
 
@@ -13,6 +14,7 @@ interface RecipeDetailData {
 
 function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
+  const { currentUser } = useUserSession();
 
   const detailData = useLiveQuery<RecipeDetailData | null>(async () => {
     if (!recipeId) {
@@ -124,6 +126,17 @@ function RecipeDetailPage() {
 
           <h1 className={styles.title}>{recipe.title}</h1>
           <p className={styles.description}>{recipe.description}</p>
+
+          {currentUser && recipe.authorId === currentUser.id ? (
+            <div className={styles.actions}>
+              <Link
+                className={styles.secondaryAction}
+                to={`/recipes/${recipe.id}/edit`}
+              >
+                Edit recipe
+              </Link>
+            </div>
+          ) : null}
 
           <dl className={styles.metadataList}>
             <div className={styles.metadataItem}>
