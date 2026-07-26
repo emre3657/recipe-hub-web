@@ -23,7 +23,10 @@
 
 .headerMeta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .eyebrow {
@@ -40,13 +43,23 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.userBadge {
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
+.selectorLabel {
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+}
+
+.userSelect {
+  min-width: 10rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.userSelect:focus-visible {
+  outline: 0.1875rem solid var(--color-primary);
+  outline-offset: 0.1875rem;
 }
 
 .sidebar {

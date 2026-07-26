@@ -1,6 +1,6 @@
 import type { Recipe } from "../types/recipe";
 import type { Rating } from "../types/rating";
-
+import type { User } from "../types/user";
 export const seedRecipes: Recipe[] = [
   {
     id: "creamy-carbonara",
@@ -73,6 +73,24 @@ export const seedRecipes: Recipe[] = [
     authorId: "user-ayse",
     createdAt: new Date("2026-01-16T14:15:00"),
     updatedAt: new Date("2026-01-16T14:15:00"),
+  },
+];
+
+export const seedUsers: User[] = [
+  {
+    id: "user-ayse",
+    name: "Ayşe Yılmaz",
+    createdAt: new Date("2026-01-01T09:00:00"),
+  },
+  {
+    id: "user-mehmet",
+    name: "Mehmet Kaya",
+    createdAt: new Date("2026-01-01T09:00:00"),
+  },
+  {
+    id: "user-zeynep",
+    name: "Zeynep Demir",
+    createdAt: new Date("2026-01-01T09:00:00"),
   },
 ];
 
