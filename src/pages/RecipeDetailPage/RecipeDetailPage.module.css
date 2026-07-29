@@ -145,6 +145,12 @@
   color: var(--color-text-muted);
 }
 
+.ratingMessage {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
 .contentSection {
   display: grid;
   gap: var(--space-3);

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
+import RatingControl from "../../components/RatingControl/RatingControl";
 import ConfirmDialog from "../../components/ConfirmaDialog/ConfirmDialog";
 import { db } from "../../database/db";
 import useObjectUrl from "../../hooks/useObjectUrl";
@@ -13,6 +14,7 @@ interface RecipeDetailData {
   recipe: Recipe;
   authorName: string;
   averageRating: number | null;
+  currentUserRating: number | null;
 }
 
 function RecipeDetailPage() {
@@ -20,6 +22,7 @@ function RecipeDetailPage() {
   const navigate = useNavigate();
   const { currentUser } = useUserSession();
   const { showToast } = useToast();
+  const [isSavingRating, setIsSavingRating] = useState(false);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,12 +49,18 @@ function RecipeDetailPage() {
         : ratings.reduce((sum, rating) => sum + rating.value, 0) /
           ratings.length;
 
+    const currentUserRating = currentUser
+      ? (ratings.find((rating) => rating.userId === currentUser.id)?.value ??
+        null)
+      : null;
+
     return {
       recipe,
       authorName: author?.name ?? "Unknown author",
       averageRating,
+      currentUserRating,
     };
-  }, [recipeId]);
+  }, [recipeId, currentUser?.id]);
 
   const imageSrc = useObjectUrl(detailData?.recipe.imageBlob);
 
@@ -123,6 +132,58 @@ function RecipeDetailPage() {
     }
   };
 
+  const handleRatingChange = async (value: number) => {
+    if (!recipeId || !currentUser || isSavingRating) {
+      return;
+    }
+
+    setIsSavingRating(true);
+
+    try {
+      const existingRating = await db.ratings
+        .where("[recipeId+userId]")
+        .equals([recipeId, currentUser.id])
+        .first();
+
+      const now = new Date();
+
+      if (existingRating) {
+        await db.ratings.update(existingRating.id, {
+          value,
+          updatedAt: now,
+        });
+      } else {
+        const id =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+        await db.ratings.add({
+          id,
+          recipeId,
+          userId: currentUser.id,
+          value,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      showToast({
+        message: existingRating
+          ? "Rating updated successfully."
+          : "Rating added successfully.",
+        variant: "success",
+      });
+    } catch {
+      showToast({
+        message: "The rating could not be saved.",
+        variant: "error",
+      });
+    } finally {
+      setIsSavingRating(false);
+    }
+  };
+
   if (!recipeId) {
     return (
       <section className={styles.statusCard}>
@@ -153,7 +214,7 @@ function RecipeDetailPage() {
     );
   }
 
-  const { recipe, authorName, averageRating } = detailData;
+  const { recipe, authorName, averageRating, currentUserRating } = detailData;
 
   const isOwner = currentUser?.id === recipe.authorId;
 
@@ -240,6 +301,27 @@ function RecipeDetailPage() {
             </dl>
           </div>
         </div>
+
+        <section
+          className={styles.contentSection}
+          aria-labelledby="rating-heading"
+        >
+          <h2 id="rating-heading" className={styles.sectionTitle}>
+            Rate this recipe
+          </h2>
+
+          {currentUser ? (
+            <RatingControl
+              value={currentUserRating}
+              isSubmitting={isSavingRating}
+              onChange={handleRatingChange}
+            />
+          ) : (
+            <p className={styles.ratingMessage}>
+              Select a user to rate this recipe.
+            </p>
+          )}
+        </section>
 
         <section
           className={styles.contentSection}

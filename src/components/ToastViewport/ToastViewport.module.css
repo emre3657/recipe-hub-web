@@ -87,13 +87,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .entering,
-  .closing {
-    animation-duration: 1ms;
-  }
-}
-
 @keyframes toast-enter {
   from {
     opacity: 0;
