@@ -1,21 +1,36 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 
 function useObjectUrl(blob: Blob | undefined): string | null {
-  const objectUrl = useMemo(() => {
-    if (!blob) {
-      return null;
-    }
-
-    return URL.createObjectURL(blob);
-  }, [blob]);
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
+    let isCancelled = false;
+
+    if (!blob) {
+      queueMicrotask(() => {
+        if (!isCancelled) {
+          setObjectUrl(null);
+        }
+      });
+
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    const nextObjectUrl = URL.createObjectURL(blob);
+
+    queueMicrotask(() => {
+      if (!isCancelled) {
+        setObjectUrl(nextObjectUrl);
       }
+    });
+
+    return () => {
+      isCancelled = true;
+      URL.revokeObjectURL(nextObjectUrl);
     };
-  }, [objectUrl]);
+  }, [blob]);
 
   return objectUrl;
 }

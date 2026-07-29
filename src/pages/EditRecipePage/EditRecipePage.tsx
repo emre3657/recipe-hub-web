@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import RecipeForm from "../../components/RecipeForm/RecipeForm";
 import type { RecipeFormValues } from "../../components/RecipeForm/recipeFormTypes";
 import { db } from "../../database/db";
+import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
 import type { Recipe } from "../../types/recipe";
 import styles from "./EditRecipePage.module.css";
@@ -12,6 +13,7 @@ function EditRecipePage() {
   const navigate = useNavigate();
   const { recipeId } = useParams<{ recipeId: string }>();
   const { currentUser } = useUserSession();
+  const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
 
@@ -112,6 +114,10 @@ function EditRecipePage() {
         return;
       }
 
+      showToast({
+        message: "Recipe updated successfully.",
+        variant: "success",
+      });
       navigate(`/recipes/${recipe.id}`);
     } catch (error) {
       setSubmitError(

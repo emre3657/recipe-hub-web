@@ -1,6 +1,12 @@
-import { useRef, useState, type ChangeEvent, type SubmitEvent } from "react";
-import { RECIPE_CATEGORIES, type RecipeCategory } from "../../types/recipe";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type SubmitEvent,
+} from "react";
 import useObjectUrl from "../../hooks/useObjectUrl";
+import { RECIPE_CATEGORIES, type RecipeCategory } from "../../types/recipe";
 import styles from "./RecipeForm.module.css";
 import type { RecipeFormValues } from "./recipeFormTypes";
 import {
@@ -20,6 +26,18 @@ interface RecipeFormProps {
   onCancel: () => void;
 }
 
+type FormErrorKey = keyof RecipeFormErrors;
+
+const FIELD_ERROR_ORDER: FormErrorKey[] = [
+  "title",
+  "description",
+  "category",
+  "durationMinutes",
+  "ingredients",
+  "instructions",
+  "image",
+];
+
 function RecipeForm({
   initialValues,
   submitLabel,
@@ -37,12 +55,12 @@ function RecipeForm({
   const [durationMinutes, setDurationMinutes] = useState(
     initialValues.durationMinutes,
   );
-  const [ingredients, setIngredients] = useState<string[]>(
-    initialValues.ingredients,
-  );
-  const [instructions, setInstructions] = useState<string[]>(
-    initialValues.instructions,
-  );
+  const [ingredients, setIngredients] = useState<string[]>([
+    ...initialValues.ingredients,
+  ]);
+  const [instructions, setInstructions] = useState<string[]>([
+    ...initialValues.instructions,
+  ]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | undefined>(
     initialValues.imageUrl,
@@ -51,10 +69,43 @@ function RecipeForm({
     initialValues.imageBlob,
   );
   const [errors, setErrors] = useState<RecipeFormErrors>({});
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const durationRef = useRef<HTMLInputElement>(null);
+  const firstIngredientRef = useRef<HTMLInputElement>(null);
+  const firstInstructionRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const submitErrorRef = useRef<HTMLParagraphElement>(null);
 
   const previewObjectUrl = useObjectUrl(imageFile ?? imageBlob);
   const previewSrc = previewObjectUrl ?? imageUrl;
+
+  useEffect(() => {
+    if (!submitError) {
+      return;
+    }
+
+    submitErrorRef.current?.focus();
+    submitErrorRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [submitError]);
+
+  const clearFieldError = (field: FormErrorKey) => {
+    setErrors((currentErrors) => {
+      if (!currentErrors[field]) {
+        return currentErrors;
+      }
+
+      return {
+        ...currentErrors,
+        [field]: undefined,
+      };
+    });
+  };
 
   const clearImageInput = () => {
     if (imageInputRef.current) {
@@ -62,24 +113,52 @@ function RecipeForm({
     }
   };
 
+  const focusFirstError = (nextErrors: RecipeFormErrors) => {
+    const firstError = FIELD_ERROR_ORDER.find((field) => nextErrors[field]);
+
+    const fieldRefs: Record<
+      FormErrorKey,
+      React.RefObject<HTMLElement | null>
+    > = {
+      title: titleRef,
+      description: descriptionRef,
+      category: categoryRef,
+      durationMinutes: durationRef,
+      ingredients: firstIngredientRef,
+      instructions: firstInstructionRef,
+      image: imageInputRef,
+    };
+
+    if (!firstError) {
+      return;
+    }
+
+    const target = fieldRefs[firstError].current;
+
+    target?.focus();
+    target?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
   const handleImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.target.files?.[0] ?? null;
 
     if (!nextFile) {
-      setImageFile(null);
-      clearImageInput();
       return;
     }
 
-    if (
-      !ACCEPTED_IMAGE_TYPES.includes(
-        nextFile.type as (typeof ACCEPTED_IMAGE_TYPES)[number],
-      )
-    ) {
+    const isAcceptedType = ACCEPTED_IMAGE_TYPES.some(
+      (acceptedType) => acceptedType === nextFile.type,
+    );
+
+    if (!isAcceptedType) {
       setErrors((currentErrors) => ({
         ...currentErrors,
         image: "Please choose a JPG, PNG, or WebP image.",
       }));
+
       clearImageInput();
       return;
     }
@@ -89,6 +168,7 @@ function RecipeForm({
         ...currentErrors,
         image: "Image must be 2 MB or smaller.",
       }));
+
       clearImageInput();
       return;
     }
@@ -96,7 +176,7 @@ function RecipeForm({
     setImageFile(nextFile);
     setImageUrl(undefined);
     setImageBlob(undefined);
-    setErrors((currentErrors) => ({ ...currentErrors, image: undefined }));
+    clearFieldError("image");
   };
 
   const removeImage = () => {
@@ -104,7 +184,7 @@ function RecipeForm({
     setImageUrl(undefined);
     setImageBlob(undefined);
     clearImageInput();
-    setErrors((currentErrors) => ({ ...currentErrors, image: undefined }));
+    clearFieldError("image");
   };
 
   const updateIngredient = (index: number, value: string) => {
@@ -113,6 +193,10 @@ function RecipeForm({
       nextIngredients[index] = value;
       return nextIngredients;
     });
+
+    if (value.trim()) {
+      clearFieldError("ingredients");
+    }
   };
 
   const addIngredient = () => {
@@ -137,6 +221,10 @@ function RecipeForm({
       nextInstructions[index] = value;
       return nextInstructions;
     });
+
+    if (value.trim()) {
+      clearFieldError("instructions");
+    }
   };
 
   const addInstruction = () => {
@@ -171,6 +259,10 @@ function RecipeForm({
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
+      window.requestAnimationFrame(() => {
+        focusFirstError(nextErrors);
+      });
+
       return;
     }
 
@@ -194,77 +286,106 @@ function RecipeForm({
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      {submitError ? (
-        <p className={styles.formError} role="alert">
-          {submitError}
-        </p>
-      ) : null}
+      <p className={styles.requiredHint}>
+        Fields marked with{" "}
+        <span className={styles.requiredMarker} aria-hidden="true">
+          *
+        </span>{" "}
+        are required.
+      </p>
 
       <div className={styles.formGrid}>
         <div className={styles.fieldGroup}>
           <label className={styles.label} htmlFor="recipe-title">
             Title
+            <span className={styles.requiredMarker} aria-hidden="true">
+              *
+            </span>
           </label>
+
           <input
+            ref={titleRef}
             id="recipe-title"
             className={styles.input}
             type="text"
+            required
             value={title}
+            aria-invalid={Boolean(errors.title)}
+            aria-describedby={errors.title ? "recipe-title-error" : undefined}
             onChange={(event) => {
               setTitle(event.target.value);
-              if (errors.title) {
-                setErrors((currentErrors) => ({
-                  ...currentErrors,
-                  title: undefined,
-                }));
-              }
+              clearFieldError("title");
             }}
           />
+
           {errors.title ? (
-            <p className={styles.fieldError}>{errors.title}</p>
+            <p
+              id="recipe-title-error"
+              className={styles.fieldError}
+              role="alert"
+            >
+              {errors.title}
+            </p>
           ) : null}
         </div>
 
         <div className={styles.fieldGroup}>
           <label className={styles.label} htmlFor="recipe-description">
             Description
+            <span className={styles.requiredMarker} aria-hidden="true">
+              *
+            </span>
           </label>
+
           <textarea
+            ref={descriptionRef}
             id="recipe-description"
             className={styles.textarea}
             rows={4}
+            required
             value={description}
+            aria-invalid={Boolean(errors.description)}
+            aria-describedby={
+              errors.description ? "recipe-description-error" : undefined
+            }
             onChange={(event) => {
               setDescription(event.target.value);
-              if (errors.description) {
-                setErrors((currentErrors) => ({
-                  ...currentErrors,
-                  description: undefined,
-                }));
-              }
+              clearFieldError("description");
             }}
           />
+
           {errors.description ? (
-            <p className={styles.fieldError}>{errors.description}</p>
+            <p
+              id="recipe-description-error"
+              className={styles.fieldError}
+              role="alert"
+            >
+              {errors.description}
+            </p>
           ) : null}
         </div>
 
         <div className={styles.fieldGroup}>
           <label className={styles.label} htmlFor="recipe-category">
             Category
+            <span className={styles.requiredMarker} aria-hidden="true">
+              *
+            </span>
           </label>
+
           <select
+            ref={categoryRef}
             id="recipe-category"
             className={styles.select}
+            required
             value={category}
+            aria-invalid={Boolean(errors.category)}
+            aria-describedby={
+              errors.category ? "recipe-category-error" : undefined
+            }
             onChange={(event) => {
               setCategory(event.target.value as RecipeCategory);
-              if (errors.category) {
-                setErrors((currentErrors) => ({
-                  ...currentErrors,
-                  category: undefined,
-                }));
-              }
+              clearFieldError("category");
             }}
           >
             {RECIPE_CATEGORIES.map((recipeCategory) => (
@@ -273,41 +394,66 @@ function RecipeForm({
               </option>
             ))}
           </select>
+
           {errors.category ? (
-            <p className={styles.fieldError}>{errors.category}</p>
+            <p
+              id="recipe-category-error"
+              className={styles.fieldError}
+              role="alert"
+            >
+              {errors.category}
+            </p>
           ) : null}
         </div>
 
         <div className={styles.fieldGroup}>
           <label className={styles.label} htmlFor="recipe-duration">
             Duration (minutes)
+            <span className={styles.requiredMarker} aria-hidden="true">
+              *
+            </span>
           </label>
+
           <input
+            ref={durationRef}
             id="recipe-duration"
             className={styles.input}
             type="number"
             min="1"
             max="1440"
+            required
             value={durationMinutes}
+            aria-invalid={Boolean(errors.durationMinutes)}
+            aria-describedby={
+              errors.durationMinutes ? "recipe-duration-error" : undefined
+            }
             onChange={(event) => {
               setDurationMinutes(event.target.value);
-              if (errors.durationMinutes) {
-                setErrors((currentErrors) => ({
-                  ...currentErrors,
-                  durationMinutes: undefined,
-                }));
-              }
+              clearFieldError("durationMinutes");
             }}
           />
+
           {errors.durationMinutes ? (
-            <p className={styles.fieldError}>{errors.durationMinutes}</p>
+            <p
+              id="recipe-duration-error"
+              className={styles.fieldError}
+              role="alert"
+            >
+              {errors.durationMinutes}
+            </p>
           ) : null}
         </div>
       </div>
 
       <div className={styles.sectionBlock}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Ingredients</h2>
+          <h2 className={styles.sectionTitle}>
+            Ingredients
+            <span className={styles.requiredMarker} aria-hidden="true">
+              *
+            </span>
+          </h2>
+
           <button
             className={styles.secondaryButton}
             type="button"
@@ -326,21 +472,30 @@ function RecipeForm({
               >
                 Ingredient {index + 1}
               </label>
+
               <div className={styles.inlineRow}>
                 <input
+                  ref={index === 0 ? firstIngredientRef : undefined}
                   id={`ingredient-${index}`}
                   className={styles.input}
                   type="text"
+                  required={index === 0}
                   value={ingredient}
+                  aria-invalid={Boolean(errors.ingredients)}
+                  aria-describedby={
+                    errors.ingredients ? "ingredients-error" : undefined
+                  }
                   onChange={(event) =>
                     updateIngredient(index, event.target.value)
                   }
                 />
+
                 <button
                   className={styles.removeButton}
                   type="button"
                   onClick={() => removeIngredient(index)}
                   disabled={ingredients.length === 1}
+                  aria-label={`Remove ingredient ${index + 1}`}
                 >
                   Remove
                 </button>
@@ -348,14 +503,23 @@ function RecipeForm({
             </div>
           ))}
         </div>
+
         {errors.ingredients ? (
-          <p className={styles.fieldError}>{errors.ingredients}</p>
+          <p id="ingredients-error" className={styles.fieldError} role="alert">
+            {errors.ingredients}
+          </p>
         ) : null}
       </div>
 
       <div className={styles.sectionBlock}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Instructions</h2>
+          <h2 className={styles.sectionTitle}>
+            Instructions
+            <span className={styles.requiredMarker} aria-hidden="true">
+              *
+            </span>
+          </h2>
+
           <button
             className={styles.secondaryButton}
             type="button"
@@ -374,21 +538,30 @@ function RecipeForm({
               >
                 Step {index + 1}
               </label>
+
               <div className={styles.inlineRow}>
                 <textarea
+                  ref={index === 0 ? firstInstructionRef : undefined}
                   id={`instruction-${index}`}
                   className={styles.textarea}
                   rows={3}
+                  required={index === 0}
                   value={instruction}
+                  aria-invalid={Boolean(errors.instructions)}
+                  aria-describedby={
+                    errors.instructions ? "instructions-error" : undefined
+                  }
                   onChange={(event) =>
                     updateInstruction(index, event.target.value)
                   }
                 />
+
                 <button
                   className={styles.removeButton}
                   type="button"
                   onClick={() => removeInstruction(index)}
                   disabled={instructions.length === 1}
+                  aria-label={`Remove instruction ${index + 1}`}
                 >
                   Remove
                 </button>
@@ -396,8 +569,11 @@ function RecipeForm({
             </div>
           ))}
         </div>
+
         {errors.instructions ? (
-          <p className={styles.fieldError}>{errors.instructions}</p>
+          <p id="instructions-error" className={styles.fieldError} role="alert">
+            {errors.instructions}
+          </p>
         ) : null}
       </div>
 
@@ -405,20 +581,30 @@ function RecipeForm({
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Image</h2>
         </div>
+
         <label className={styles.label} htmlFor="recipe-image">
-          Optional image (JPG, PNG, or WebP, max 2 MB)
+          Optional image
         </label>
+
+        <p className={styles.helperText}>
+          JPG, PNG or WebP. Maximum file size: 2 MB.
+        </p>
+
         <input
           ref={imageInputRef}
           id="recipe-image"
           className={styles.fileInput}
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          aria-invalid={Boolean(errors.image)}
+          aria-describedby={errors.image ? "recipe-image-error" : undefined}
           onChange={handleImageSelection}
         />
 
         {errors.image ? (
-          <p className={styles.fieldError}>{errors.image}</p>
+          <p id="recipe-image-error" className={styles.fieldError} role="alert">
+            {errors.image}
+          </p>
         ) : null}
 
         {previewSrc ? (
@@ -450,14 +636,27 @@ function RecipeForm({
         ) : null}
       </div>
 
+      {submitError ? (
+        <p
+          ref={submitErrorRef}
+          className={styles.submitError}
+          role="alert"
+          tabIndex={-1}
+        >
+          {submitError}
+        </p>
+      ) : null}
+
       <div className={styles.actions}>
         <button
           className={styles.secondaryButton}
           type="button"
+          disabled={isSubmitting}
           onClick={onCancel}
         >
           Cancel
         </button>
+
         <button
           className={styles.primaryButton}
           type="submit"

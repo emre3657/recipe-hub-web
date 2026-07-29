@@ -1,11 +1,14 @@
 import AppRouter from "./app/AppRouter";
+import ToastProvider from "./app/ToastProvider";
 import UserSessionProvider from "./app/UserSessionProvider";
 
 function App() {
   return (
-    <UserSessionProvider>
-      <AppRouter />
-    </UserSessionProvider>
+    <ToastProvider>
+      <UserSessionProvider>
+        <AppRouter />
+      </UserSessionProvider>
+    </ToastProvider>
   );
 }
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import RecipeForm from "../../components/RecipeForm/RecipeForm";
 import type { RecipeFormValues } from "../../components/RecipeForm/recipeFormTypes";
 import { db } from "../../database/db";
+import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
 import { RECIPE_CATEGORIES, type Recipe } from "../../types/recipe";
 import styles from "./AddRecipePage.module.css";
@@ -10,6 +11,7 @@ import styles from "./AddRecipePage.module.css";
 function AddRecipePage() {
   const navigate = useNavigate();
   const { currentUser } = useUserSession();
+  const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
 
@@ -52,6 +54,10 @@ function AddRecipePage() {
       };
 
       await db.recipes.add(recipe);
+      showToast({
+        message: "Recipe added successfully.",
+        variant: "success",
+      });
       navigate("/");
     } catch (error) {
       setSubmitError("Unable to save the recipe right now. Please try again.");
