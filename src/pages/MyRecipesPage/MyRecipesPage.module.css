@@ -13,15 +13,6 @@
   gap: var(--space-4);
 }
 
-.eyebrow {
-  margin-bottom: var(--space-1);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .title {
   font-size: clamp(1.75rem, 3vw, 2.25rem);
   font-weight: var(--font-weight-semibold);

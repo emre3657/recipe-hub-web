@@ -126,7 +126,6 @@ function DashboardPage() {
     <section className={styles.page} aria-labelledby="dashboard-title">
       <div className={styles.headerRow}>
         <div className={styles.headerContent}>
-          <p className={styles.eyebrow}>Recipe collection</p>
           <h1 id="dashboard-title" className={styles.title}>
             Recipes
           </h1>

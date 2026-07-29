@@ -84,7 +84,9 @@
 
 .actions {
   display: flex;
-  justify-content: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .secondaryAction {
@@ -102,6 +104,25 @@
 .secondaryAction:hover,
 .secondaryAction:focus-visible {
   text-decoration: underline;
+}
+
+.deleteAction {
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.deleteAction:hover {
+  filter: brightness(0.96);
+}
+
+.deleteAction:focus-visible {
+  outline: 0.1875rem solid var(--color-primary);
+  outline-offset: 0.1875rem;
 }
 
 .metadataList {

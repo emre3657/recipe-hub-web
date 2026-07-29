@@ -132,7 +132,9 @@ function EditRecipePage() {
   return (
     <section className={styles.page} aria-labelledby="edit-recipe-title">
       <div className={styles.headerBlock}>
-        <p className={styles.eyebrow}>Update recipe</p>
+        <Link className={styles.backLink} to={`/recipes/${recipe.id}`}>
+          Back to recipe
+        </Link>
         <h1 id="edit-recipe-title" className={styles.title}>
           Edit Recipe
         </h1>

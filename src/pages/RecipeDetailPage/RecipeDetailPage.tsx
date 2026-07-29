@@ -1,7 +1,10 @@
-import { Link, useParams } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
+import ConfirmDialog from "../../components/ConfirmaDialog/ConfirmDialog";
 import { db } from "../../database/db";
 import useObjectUrl from "../../hooks/useObjectUrl";
+import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
 import type { Recipe } from "../../types/recipe";
 import styles from "./RecipeDetailPage.module.css";
@@ -14,7 +17,12 @@ interface RecipeDetailData {
 
 function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
+  const navigate = useNavigate();
   const { currentUser } = useUserSession();
+  const { showToast } = useToast();
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const detailData = useLiveQuery<RecipeDetailData | null>(async () => {
     if (!recipeId) {
@@ -47,6 +55,74 @@ function RecipeDetailPage() {
 
   const imageSrc = useObjectUrl(detailData?.recipe.imageBlob);
 
+  const openDeleteDialog = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!detailData || !currentUser) {
+      return;
+    }
+
+    const { recipe } = detailData;
+
+    if (recipe.authorId !== currentUser.id) {
+      showToast({
+        message: "You can only delete your own recipes.",
+        variant: "error",
+      });
+
+      setIsDeleteDialogOpen(false);
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await db.transaction("rw", db.recipes, db.ratings, async () => {
+        const storedRecipe = await db.recipes.get(recipe.id);
+
+        if (!storedRecipe) {
+          throw new Error("Recipe no longer exists.");
+        }
+
+        if (storedRecipe.authorId !== currentUser.id) {
+          throw new Error("You do not have permission to delete this recipe.");
+        }
+
+        await db.ratings.where("recipeId").equals(recipe.id).delete();
+        await db.recipes.delete(recipe.id);
+      });
+
+      showToast({
+        message: "Recipe deleted successfully.",
+        variant: "success",
+      });
+
+      navigate("/");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The recipe could not be deleted.";
+
+      showToast({
+        message,
+        variant: "error",
+      });
+
+      setIsDeleting(false);
+    }
+  };
+
   if (!recipeId) {
     return (
       <section className={styles.statusCard}>
@@ -78,111 +154,139 @@ function RecipeDetailPage() {
   }
 
   const { recipe, authorName, averageRating } = detailData;
+
+  const isOwner = currentUser?.id === recipe.authorId;
+
   const createdAtLabel = new Intl.DateTimeFormat("en", {
     year: "numeric",
     month: "long",
     day: "numeric",
   }).format(recipe.createdAt);
+
   const ratingLabel =
     averageRating === null ? "Not rated" : `★ ${averageRating.toFixed(1)}`;
 
   return (
-    <article className={styles.page}>
-      <Link className={styles.backLink} to="/">
-        Back to recipes
-      </Link>
+    <>
+      <article className={styles.page}>
+        <Link className={styles.backLink} to="/">
+          Back to recipes
+        </Link>
 
-      <div className={styles.hero}>
-        <div className={styles.imageColumn}>
-          {imageSrc ? (
-            <img
-              className={styles.image}
-              src={imageSrc}
-              alt={`Dish photo for ${recipe.title}`}
-            />
-          ) : recipe.imageUrl ? (
-            <img
-              className={styles.image}
-              src={recipe.imageUrl}
-              alt={`Dish photo for ${recipe.title}`}
-            />
-          ) : (
-            <div
-              className={styles.imagePlaceholder}
-              role="img"
-              aria-label={`No image available for ${recipe.title}`}
-            />
-          )}
-        </div>
-
-        <div className={styles.infoColumn}>
-          <div className={styles.metaRow}>
-            <span className={styles.categoryBadge}>{recipe.category}</span>
-            <span className={styles.duration}>
-              {recipe.durationMinutes} min
-            </span>
-            <span className={styles.rating}>{ratingLabel}</span>
+        <div className={styles.hero}>
+          <div className={styles.imageColumn}>
+            {imageSrc ? (
+              <img
+                className={styles.image}
+                src={imageSrc}
+                alt={`Dish photo for ${recipe.title}`}
+              />
+            ) : recipe.imageUrl ? (
+              <img
+                className={styles.image}
+                src={recipe.imageUrl}
+                alt={`Dish photo for ${recipe.title}`}
+              />
+            ) : (
+              <div
+                className={styles.imagePlaceholder}
+                role="img"
+                aria-label={`No image available for ${recipe.title}`}
+              />
+            )}
           </div>
 
-          <h1 className={styles.title}>{recipe.title}</h1>
-          <p className={styles.description}>{recipe.description}</p>
+          <div className={styles.infoColumn}>
+            <div className={styles.metaRow}>
+              <span className={styles.categoryBadge}>{recipe.category}</span>
+              <span className={styles.duration}>
+                {recipe.durationMinutes} min
+              </span>
+              <span className={styles.rating}>{ratingLabel}</span>
+            </div>
 
-          {currentUser && recipe.authorId === currentUser.id ? (
-            <div className={styles.actions}>
-              <Link
-                className={styles.secondaryAction}
-                to={`/recipes/${recipe.id}/edit`}
-              >
-                Edit recipe
-              </Link>
-            </div>
-          ) : null}
+            <h1 className={styles.title}>{recipe.title}</h1>
+            <p className={styles.description}>{recipe.description}</p>
 
-          <dl className={styles.metadataList}>
-            <div className={styles.metadataItem}>
-              <dt className={styles.metadataLabel}>Author</dt>
-              <dd className={styles.metadataValue}>{authorName}</dd>
-            </div>
-            <div className={styles.metadataItem}>
-              <dt className={styles.metadataLabel}>Created</dt>
-              <dd className={styles.metadataValue}>{createdAtLabel}</dd>
-            </div>
-          </dl>
+            {isOwner ? (
+              <div className={styles.actions}>
+                <Link
+                  className={styles.secondaryAction}
+                  to={`/recipes/${recipe.id}/edit`}
+                >
+                  Edit recipe
+                </Link>
+
+                <button
+                  className={styles.deleteAction}
+                  type="button"
+                  onClick={openDeleteDialog}
+                >
+                  Delete recipe
+                </button>
+              </div>
+            ) : null}
+
+            <dl className={styles.metadataList}>
+              <div className={styles.metadataItem}>
+                <dt className={styles.metadataLabel}>Author</dt>
+                <dd className={styles.metadataValue}>{authorName}</dd>
+              </div>
+
+              <div className={styles.metadataItem}>
+                <dt className={styles.metadataLabel}>Created</dt>
+                <dd className={styles.metadataValue}>{createdAtLabel}</dd>
+              </div>
+            </dl>
+          </div>
         </div>
-      </div>
 
-      <section
-        className={styles.contentSection}
-        aria-labelledby="ingredients-heading"
-      >
-        <h2 id="ingredients-heading" className={styles.sectionTitle}>
-          Ingredients
-        </h2>
-        <ul className={styles.list}>
-          {recipe.ingredients.map((ingredient, index) => (
-            <li key={`${index}-${ingredient}`} className={styles.listItem}>
-              {ingredient}
-            </li>
-          ))}
-        </ul>
-      </section>
+        <section
+          className={styles.contentSection}
+          aria-labelledby="ingredients-heading"
+        >
+          <h2 id="ingredients-heading" className={styles.sectionTitle}>
+            Ingredients
+          </h2>
 
-      <section
-        className={styles.contentSection}
-        aria-labelledby="instructions-heading"
-      >
-        <h2 id="instructions-heading" className={styles.sectionTitle}>
-          Instructions
-        </h2>
-        <ol className={styles.orderedList}>
-          {recipe.instructions.map((instruction, index) => (
-            <li key={`${index}-${instruction}`} className={styles.listItem}>
-              {instruction}
-            </li>
-          ))}
-        </ol>
-      </section>
-    </article>
+          <ul className={styles.list}>
+            {recipe.ingredients.map((ingredient, index) => (
+              <li key={`${index}-${ingredient}`} className={styles.listItem}>
+                {ingredient}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section
+          className={styles.contentSection}
+          aria-labelledby="instructions-heading"
+        >
+          <h2 id="instructions-heading" className={styles.sectionTitle}>
+            Instructions
+          </h2>
+
+          <ol className={styles.orderedList}>
+            {recipe.instructions.map((instruction, index) => (
+              <li key={`${index}-${instruction}`} className={styles.listItem}>
+                {instruction}
+              </li>
+            ))}
+          </ol>
+        </section>
+      </article>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="Delete recipe?"
+        description={`Are you sure you want to delete “${recipe.title}”? This action cannot be undone.`}
+        confirmLabel="Delete recipe"
+        cancelLabel="Cancel"
+        isConfirming={isDeleting}
+        onConfirm={handleDeleteRecipe}
+        onClose={closeDeleteDialog}
+      />
+    </>
   );
 }
 

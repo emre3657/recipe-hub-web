@@ -112,7 +112,6 @@ function MyRecipesPage() {
     <section className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>Personal collection</p>
           <h1 className={styles.title}>My Recipes</h1>
           <p className={styles.description}>
             Recipes created by {currentUser.name}.

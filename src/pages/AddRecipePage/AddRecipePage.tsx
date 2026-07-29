@@ -83,10 +83,11 @@ function AddRecipePage() {
   return (
     <section className={styles.page} aria-labelledby="add-recipe-title">
       <div className={styles.headerBlock}>
-        <p className={styles.eyebrow}>Create recipe</p>
-
+        <Link className={styles.backLink} to={`/`}>
+          Back to recipes
+        </Link>
         <h1 id="add-recipe-title" className={styles.title}>
-          Add Recipe
+          Create Recipe
         </h1>
 
         <p className={styles.description}>
