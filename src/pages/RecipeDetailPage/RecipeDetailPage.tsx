@@ -1,32 +1,19 @@
 import { useState, type SubmitEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
-import RatingControl from "../../components/RatingControl/RatingControl";
 import ConfirmDialog from "../../components/ConfirmaDialog/ConfirmDialog";
+import RecipeDetailComments from "../../components/RecipeDetail/RecipeDetailComments";
+import RecipeDetailHero from "../../components/RecipeDetail/RecipeDetailHero";
+import RecipeDetailSections from "../../components/RecipeDetail/RecipeDetailSections";
+import type {
+  RecipeCommentItem,
+  RecipeDetailData,
+} from "../../components/RecipeDetail/types";
 import { db } from "../../database/db";
 import useObjectUrl from "../../hooks/useObjectUrl";
 import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
-import type { Recipe } from "../../types/recipe";
 import styles from "./RecipeDetailPage.module.css";
-
-interface RecipeDetailData {
-  recipe: Recipe;
-  authorName: string;
-  averageRating: number | null;
-  currentUserRating: number | null;
-  currentUserFavoriteId: string | null;
-  comments: RecipeCommentItem[];
-}
-
-interface RecipeCommentItem {
-  id: string;
-  userId: string;
-  userName: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
@@ -551,15 +538,6 @@ function RecipeDetailPage() {
   const isOwner = currentUser?.id === recipe.authorId;
   const isFavorite = currentUserFavoriteId !== null;
 
-  const createdAtLabel = new Intl.DateTimeFormat("en", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(recipe.createdAt);
-
-  const ratingLabel =
-    averageRating === null ? "Not rated" : `★ ${averageRating.toFixed(1)}`;
-
   return (
     <>
       <article className={styles.page}>
@@ -567,346 +545,50 @@ function RecipeDetailPage() {
           Back to recipes
         </Link>
 
-        <div className={styles.hero}>
-          <div className={styles.imageColumn}>
-            {imageSrc ? (
-              <img
-                className={styles.image}
-                src={imageSrc}
-                alt={`Dish photo for ${recipe.title}`}
-              />
-            ) : recipe.imageUrl ? (
-              <img
-                className={styles.image}
-                src={recipe.imageUrl}
-                alt={`Dish photo for ${recipe.title}`}
-              />
-            ) : (
-              <div
-                className={styles.imagePlaceholder}
-                role="img"
-                aria-label={`No image available for ${recipe.title}`}
-              />
-            )}
-          </div>
+        <RecipeDetailHero
+          recipe={recipe}
+          recipeImageSrc={imageSrc}
+          authorName={authorName}
+          averageRating={averageRating}
+          currentUser={currentUser}
+          isFavorite={isFavorite}
+          isTogglingFavorite={isTogglingFavorite}
+          isOwner={isOwner}
+          onToggleFavorite={handleToggleFavorite}
+          onDeleteRecipe={openDeleteDialog}
+        />
 
-          <div className={styles.infoColumn}>
-            <div className={styles.metaRow}>
-              <span className={styles.categoryBadge}>{recipe.category}</span>
-              <span className={styles.duration}>
-                {recipe.durationMinutes} min
-              </span>
-              <span className={styles.rating}>{ratingLabel}</span>
-            </div>
+        <RecipeDetailSections
+          recipe={recipe}
+          currentUserRating={currentUserRating}
+          isSavingRating={isSavingRating}
+          onRatingChange={handleRatingChange}
+          currentUser={currentUser}
+        />
 
-            <h1 className={styles.title}>{recipe.title}</h1>
-            <p className={styles.description}>{recipe.description}</p>
+        <RecipeDetailComments
+          comments={comments}
+          currentUser={currentUser}
+          commentContent={commentContent}
+          commentError={commentError}
+          isSubmittingComment={isSubmittingComment}
+          editingCommentId={editingCommentId}
+          editingCommentContent={editingCommentContent}
+          isUpdatingComment={isUpdatingComment}
+          onCommentContentChange={(value) => {
+            setCommentContent(value);
 
-            {currentUser ? (
-              <div className={styles.actions}>
-                <button
-                  className={[
-                    styles.favoriteAction,
-                    isFavorite ? styles.favoriteActionActive : "",
-                  ].join(" ")}
-                  type="button"
-                  disabled={isTogglingFavorite}
-                  aria-pressed={isFavorite}
-                  onClick={handleToggleFavorite}
-                >
-                  <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
-                  {isTogglingFavorite
-                    ? "Updating..."
-                    : isFavorite
-                      ? "Remove from favorites"
-                      : "Add to favorites"}
-                </button>
-
-                {isOwner ? (
-                  <>
-                    <Link
-                      className={styles.secondaryAction}
-                      to={`/recipes/${recipe.id}/edit`}
-                    >
-                      Edit recipe
-                    </Link>
-
-                    <button
-                      className={styles.deleteAction}
-                      type="button"
-                      onClick={openDeleteDialog}
-                    >
-                      Delete recipe
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            ) : (
-              <p className={styles.favoriteMessage}>
-                Select a user to add this recipe to favorites.
-              </p>
-            )}
-
-            <dl className={styles.metadataList}>
-              <div className={styles.metadataItem}>
-                <dt className={styles.metadataLabel}>Author</dt>
-                <dd className={styles.metadataValue}>{authorName}</dd>
-              </div>
-
-              <div className={styles.metadataItem}>
-                <dt className={styles.metadataLabel}>Created</dt>
-                <dd className={styles.metadataValue}>{createdAtLabel}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        <section
-          className={styles.contentSection}
-          aria-labelledby="rating-heading"
-        >
-          <h2 id="rating-heading" className={styles.sectionTitle}>
-            Rate this recipe
-          </h2>
-
-          {currentUser ? (
-            <RatingControl
-              value={currentUserRating}
-              isSubmitting={isSavingRating}
-              onChange={handleRatingChange}
-            />
-          ) : (
-            <p className={styles.ratingMessage}>
-              Select a user to rate this recipe.
-            </p>
-          )}
-        </section>
-
-        <section
-          className={styles.contentSection}
-          aria-labelledby="ingredients-heading"
-        >
-          <h2 id="ingredients-heading" className={styles.sectionTitle}>
-            Ingredients
-          </h2>
-
-          <ul className={styles.list}>
-            {recipe.ingredients.map((ingredient, index) => (
-              <li key={`${index}-${ingredient}`} className={styles.listItem}>
-                {ingredient}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section
-          className={styles.contentSection}
-          aria-labelledby="instructions-heading"
-        >
-          <h2 id="instructions-heading" className={styles.sectionTitle}>
-            Instructions
-          </h2>
-
-          <ol className={styles.orderedList}>
-            {recipe.instructions.map((instruction, index) => (
-              <li key={`${index}-${instruction}`} className={styles.listItem}>
-                {instruction}
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section
-          className={styles.contentSection}
-          aria-labelledby="comments-heading"
-        >
-          <div className={styles.commentsHeader}>
-            <h2 id="comments-heading" className={styles.sectionTitle}>
-              Comments
-            </h2>
-
-            <span className={styles.commentCount}>
-              {comments.length} {comments.length === 1 ? "comment" : "comments"}
-            </span>
-          </div>
-
-          {currentUser ? (
-            <form className={styles.commentForm} onSubmit={handleAddComment}>
-              <label className={styles.commentLabel} htmlFor="comment-content">
-                Add a comment
-              </label>
-
-              <textarea
-                id="comment-content"
-                className={styles.commentTextarea}
-                value={commentContent}
-                maxLength={500}
-                rows={4}
-                disabled={isSubmittingComment}
-                aria-invalid={commentError ? true : undefined}
-                aria-describedby={
-                  commentError
-                    ? "comment-error comment-counter"
-                    : "comment-counter"
-                }
-                onChange={(event) => {
-                  setCommentContent(event.target.value);
-
-                  if (commentError) {
-                    setCommentError(null);
-                  }
-                }}
-              />
-
-              <div className={styles.commentFormFooter}>
-                <div>
-                  {commentError ? (
-                    <p
-                      id="comment-error"
-                      className={styles.commentError}
-                      role="alert"
-                    >
-                      {commentError}
-                    </p>
-                  ) : null}
-
-                  <p id="comment-counter" className={styles.commentCounter}>
-                    {commentContent.length}/500
-                  </p>
-                </div>
-
-                <button
-                  className={styles.commentSubmit}
-                  type="submit"
-                  disabled={isSubmittingComment}
-                >
-                  {isSubmittingComment ? "Adding..." : "Add comment"}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <p className={styles.commentMessage}>
-              Select a user to add a comment.
-            </p>
-          )}
-
-          {comments.length === 0 ? (
-            <p className={styles.emptyComments}>
-              No comments yet. Be the first to share your thoughts.
-            </p>
-          ) : (
-            <ul className={styles.commentList}>
-              {comments.map((comment: RecipeCommentItem) => {
-                const createdAt = new Intl.DateTimeFormat("en", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(comment.createdAt);
-
-                return (
-                  <li key={comment.id} className={styles.commentItem}>
-                    <div className={styles.commentMeta}>
-                      <strong className={styles.commentAuthor}>
-                        {comment.userName}
-                      </strong>
-
-                      <time
-                        className={styles.commentDate}
-                        dateTime={comment.createdAt.toISOString()}
-                      >
-                        {createdAt}
-                      </time>
-                    </div>
-
-                    {editingCommentId === comment.id ? (
-                      <div className={styles.commentEditForm}>
-                        <label
-                          className={styles.visuallyHidden}
-                          htmlFor={`edit-comment-${comment.id}`}
-                        >
-                          Edit comment
-                        </label>
-
-                        <textarea
-                          id={`edit-comment-${comment.id}`}
-                          className={styles.commentTextarea}
-                          value={editingCommentContent}
-                          maxLength={500}
-                          rows={4}
-                          disabled={isUpdatingComment}
-                          onChange={(event) =>
-                            setEditingCommentContent(event.target.value)
-                          }
-                        />
-
-                        <div className={styles.commentEditFooter}>
-                          <span className={styles.commentCounter}>
-                            {editingCommentContent.length}/500
-                          </span>
-
-                          <div className={styles.commentActions}>
-                            <button
-                              className={styles.commentCancelAction}
-                              type="button"
-                              disabled={isUpdatingComment}
-                              onClick={handleCancelEditingComment}
-                            >
-                              Cancel
-                            </button>
-
-                            <button
-                              className={styles.commentSaveAction}
-                              type="button"
-                              disabled={isUpdatingComment}
-                              onClick={() => handleUpdateComment(comment.id)}
-                            >
-                              {isUpdatingComment ? "Saving..." : "Save"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className={styles.commentContent}>
-                          {comment.content}
-                        </p>
-
-                        {currentUser?.id === comment.userId ? (
-                          <div className={styles.commentActions}>
-                            <button
-                              className={styles.commentEditAction}
-                              type="button"
-                              onClick={() =>
-                                handleStartEditingComment(
-                                  comment.id,
-                                  comment.content,
-                                )
-                              }
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              className={styles.commentDeleteAction}
-                              type="button"
-                              onClick={() =>
-                                openCommentDeleteDialog(comment.id)
-                              }
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ) : null}
-                      </>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+            if (commentError) {
+              setCommentError(null);
+            }
+          }}
+          onAddComment={handleAddComment}
+          onStartEditingComment={handleStartEditingComment}
+          onCancelEditingComment={handleCancelEditingComment}
+          onUpdateComment={handleUpdateComment}
+          onEditingCommentContentChange={setEditingCommentContent}
+          onOpenCommentDeleteDialog={openCommentDeleteDialog}
+        />
       </article>
 
       <ConfirmDialog
