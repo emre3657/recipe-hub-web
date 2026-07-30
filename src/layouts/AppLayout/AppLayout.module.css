@@ -83,8 +83,7 @@
   gap: var(--space-2);
 }
 
-.navLink,
-.navButton {
+.navLink {
   display: inline-flex;
   align-items: center;
   padding: var(--space-2) var(--space-3);
@@ -99,9 +98,7 @@
 }
 
 .navLink:hover,
-.navLink:focus-visible,
-.navButton:hover,
-.navButton:focus-visible {
+.navLink:focus-visible {
   background: var(--color-primary-soft);
   color: var(--color-primary);
 }
@@ -109,11 +106,6 @@
 .navLink[aria-current="page"] {
   background: var(--color-primary-soft);
   color: var(--color-primary);
-}
-
-.navButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
 }
 
 .main {

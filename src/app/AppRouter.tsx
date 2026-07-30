@@ -1,11 +1,12 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import AppLayout from "../layouts/AppLayout/AppLayout";
-import AddRecipePage from "../pages/AddRecipePage/AddRecipePage";
 import DashboardPage from "../pages/DashboardPage/DashboardPage";
-import MyRecipesPage from "../pages/MyRecipesPage/MyRecipesPage";
-import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
+import AddRecipePage from "../pages/AddRecipePage/AddRecipePage";
 import RecipeDetailPage from "../pages/RecipeDetailPage/RecipeDetailPage";
 import EditRecipePage from "../pages/EditRecipePage/EditRecipePage";
+import MyRecipesPage from "../pages/MyRecipesPage/MyRecipesPage";
+import FavoritesPage from "../pages/FavoritesPage/FavoritesPage";
+import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 
 const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: "/my-recipes",
         element: <MyRecipesPage />,
+      },
+      {
+        path: "/favorites",
+        element: <FavoritesPage />,
       },
       {
         path: "*",

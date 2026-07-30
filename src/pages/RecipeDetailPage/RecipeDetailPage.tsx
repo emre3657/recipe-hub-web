@@ -15,6 +15,7 @@ interface RecipeDetailData {
   authorName: string;
   averageRating: number | null;
   currentUserRating: number | null;
+  currentUserFavoriteId: string | null;
 }
 
 function RecipeDetailPage() {
@@ -26,6 +27,7 @@ function RecipeDetailPage() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   const detailData = useLiveQuery<RecipeDetailData | null>(async () => {
     if (!recipeId) {
@@ -38,9 +40,15 @@ function RecipeDetailPage() {
       return null;
     }
 
-    const [ratings, author] = await Promise.all([
+    const [ratings, author, currentUserFavorite] = await Promise.all([
       db.ratings.where("recipeId").equals(recipeId).toArray(),
       db.users.get(recipe.authorId),
+      currentUser
+        ? db.favorites
+            .where("[recipeId+userId]")
+            .equals([recipeId, currentUser.id])
+            .first()
+        : Promise.resolve(undefined),
     ]);
 
     const averageRating =
@@ -59,6 +67,7 @@ function RecipeDetailPage() {
       authorName: author?.name ?? "Unknown author",
       averageRating,
       currentUserRating,
+      currentUserFavoriteId: currentUserFavorite?.id ?? null,
     };
   }, [recipeId, currentUser?.id]);
 
@@ -96,20 +105,29 @@ function RecipeDetailPage() {
     setIsDeleting(true);
 
     try {
-      await db.transaction("rw", db.recipes, db.ratings, async () => {
-        const storedRecipe = await db.recipes.get(recipe.id);
+      await db.transaction(
+        "rw",
+        db.recipes,
+        db.ratings,
+        db.favorites,
+        async () => {
+          const storedRecipe = await db.recipes.get(recipe.id);
 
-        if (!storedRecipe) {
-          throw new Error("Recipe no longer exists.");
-        }
+          if (!storedRecipe) {
+            throw new Error("Recipe no longer exists.");
+          }
 
-        if (storedRecipe.authorId !== currentUser.id) {
-          throw new Error("You do not have permission to delete this recipe.");
-        }
+          if (storedRecipe.authorId !== currentUser.id) {
+            throw new Error(
+              "You do not have permission to delete this recipe.",
+            );
+          }
 
-        await db.ratings.where("recipeId").equals(recipe.id).delete();
-        await db.recipes.delete(recipe.id);
-      });
+          await db.ratings.where("recipeId").equals(recipe.id).delete();
+          await db.favorites.where("recipeId").equals(recipe.id).delete();
+          await db.recipes.delete(recipe.id);
+        },
+      );
 
       showToast({
         message: "Recipe deleted successfully.",
@@ -184,6 +202,54 @@ function RecipeDetailPage() {
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!recipeId || !currentUser || !detailData || isTogglingFavorite) {
+      return;
+    }
+
+    setIsTogglingFavorite(true);
+
+    try {
+      const existingFavorite = await db.favorites
+        .where("[recipeId+userId]")
+        .equals([recipeId, currentUser.id])
+        .first();
+
+      if (existingFavorite) {
+        await db.favorites.delete(existingFavorite.id);
+
+        showToast({
+          message: "Recipe removed from favorites.",
+          variant: "success",
+        });
+      } else {
+        const id =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+        await db.favorites.add({
+          id,
+          recipeId,
+          userId: currentUser.id,
+          createdAt: new Date(),
+        });
+
+        showToast({
+          message: "Recipe added to favorites.",
+          variant: "success",
+        });
+      }
+    } catch {
+      showToast({
+        message: "The favorite could not be updated.",
+        variant: "error",
+      });
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
+
   if (!recipeId) {
     return (
       <section className={styles.statusCard}>
@@ -214,9 +280,16 @@ function RecipeDetailPage() {
     );
   }
 
-  const { recipe, authorName, averageRating, currentUserRating } = detailData;
+  const {
+    recipe,
+    authorName,
+    averageRating,
+    currentUserRating,
+    currentUserFavoriteId,
+  } = detailData;
 
   const isOwner = currentUser?.id === recipe.authorId;
+  const isFavorite = currentUserFavoriteId !== null;
 
   const createdAtLabel = new Intl.DateTimeFormat("en", {
     year: "numeric",
@@ -269,24 +342,50 @@ function RecipeDetailPage() {
             <h1 className={styles.title}>{recipe.title}</h1>
             <p className={styles.description}>{recipe.description}</p>
 
-            {isOwner ? (
+            {currentUser ? (
               <div className={styles.actions}>
-                <Link
-                  className={styles.secondaryAction}
-                  to={`/recipes/${recipe.id}/edit`}
-                >
-                  Edit recipe
-                </Link>
-
                 <button
-                  className={styles.deleteAction}
+                  className={[
+                    styles.favoriteAction,
+                    isFavorite ? styles.favoriteActionActive : "",
+                  ].join(" ")}
                   type="button"
-                  onClick={openDeleteDialog}
+                  disabled={isTogglingFavorite}
+                  aria-pressed={isFavorite}
+                  onClick={handleToggleFavorite}
                 >
-                  Delete recipe
+                  <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
+                  {isTogglingFavorite
+                    ? "Updating..."
+                    : isFavorite
+                      ? "Remove from favorites"
+                      : "Add to favorites"}
                 </button>
+
+                {isOwner ? (
+                  <>
+                    <Link
+                      className={styles.secondaryAction}
+                      to={`/recipes/${recipe.id}/edit`}
+                    >
+                      Edit recipe
+                    </Link>
+
+                    <button
+                      className={styles.deleteAction}
+                      type="button"
+                      onClick={openDeleteDialog}
+                    >
+                      Delete recipe
+                    </button>
+                  </>
+                ) : null}
               </div>
-            ) : null}
+            ) : (
+              <p className={styles.favoriteMessage}>
+                Select a user to add this recipe to favorites.
+              </p>
+            )}
 
             <dl className={styles.metadataList}>
               <div className={styles.metadataItem}>

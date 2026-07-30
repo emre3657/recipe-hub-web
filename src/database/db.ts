@@ -1,13 +1,15 @@
 import Dexie, { type Table } from "dexie";
-import type { Recipe } from "../types/recipe";
+import type { Favorite } from "../types/favorite";
 import type { Rating } from "../types/rating";
+import type { Recipe } from "../types/recipe";
 import type { User } from "../types/user";
-import { seedRecipes, seedRatings, seedUsers } from "./seedData";
+import { seedRatings, seedRecipes, seedUsers } from "./seedData";
 
 export class RecipeHubDatabase extends Dexie {
   recipes!: Table<Recipe, string>;
   ratings!: Table<Rating, string>;
   users!: Table<User, string>;
+  favorites!: Table<Favorite, string>;
 
   constructor() {
     super("recipeHubDB");
@@ -24,6 +26,10 @@ export class RecipeHubDatabase extends Dexie {
       .upgrade(async (transaction) => {
         await transaction.table<User, string>("users").bulkAdd(seedUsers);
       });
+
+    this.version(3).stores({
+      favorites: "id, recipeId, userId, createdAt, &[recipeId+userId]",
+    });
 
     this.on("populate", async () => {
       await this.users.bulkAdd(seedUsers);
