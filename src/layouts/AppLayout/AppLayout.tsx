@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 import useUserSession from "../../hooks/useUserSession";
 import FocusTrap from "../../components/FocusTrap/FocusTrap";
 import styles from "./AppLayout.module.css";
 
 function AppLayout() {
+  const location = useLocation();
+
   const { users, currentUserId, isLoading, selectUser } = useUserSession();
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+  }, [location.pathname]);
 
   const closeNavigation = () => {
     setIsNavigationOpen(false);
@@ -153,7 +163,8 @@ function AppLayout() {
       </main>
 
       <footer className={styles.footer}>
-        <p>Footer</p>
+        <p>© 2026 Recipe Hub ❤️ Built with React, TypeScript and IndexedDB.</p>
+        <p></p>
       </footer>
     </div>
   );

@@ -98,3 +98,14 @@
     width: 100%;
   }
 }
+
+@media (max-width: 32rem) {
+  .page {
+    gap: var(--space-5);
+  }
+
+  .emptyState,
+  .statusCard {
+    padding: var(--space-5);
+  }
+}

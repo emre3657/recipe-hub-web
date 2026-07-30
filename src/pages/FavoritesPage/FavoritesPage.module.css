@@ -47,3 +47,13 @@
   color: var(--color-text-muted);
   line-height: 1.6;
 }
+
+@media (max-width: 32rem) {
+  .page {
+    gap: var(--space-5);
+  }
+
+  .statusCard {
+    padding: var(--space-5);
+  }
+}

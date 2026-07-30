@@ -56,3 +56,18 @@
   color: var(--color-primary);
   font-weight: var(--font-weight-semibold);
 }
+
+.link:hover,
+.link:focus-visible {
+  text-decoration: underline;
+}
+
+@media (max-width: 32rem) {
+  .page {
+    gap: var(--space-5);
+  }
+
+  .accessMessage {
+    padding: var(--space-5);
+  }
+}

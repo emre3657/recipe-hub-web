@@ -45,6 +45,7 @@ button,
 input,
 textarea,
 select {
+  min-width: 0;
   font: inherit;
 }
 
@@ -78,6 +79,16 @@ p {
 
 textarea {
   resize: vertical;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+li,
+dd {
+  overflow-wrap: anywhere;
 }
 
 ::selection {

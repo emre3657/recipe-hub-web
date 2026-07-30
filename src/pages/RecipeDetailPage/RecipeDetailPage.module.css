@@ -33,19 +33,12 @@
   text-decoration: underline;
 }
 
-@media (max-width: 48rem) {
-  .hero {
-    grid-template-columns: 1fr;
+@media (max-width: 32rem) {
+  .page {
+    gap: var(--space-5);
   }
 
-  .metaRow {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 40rem) {
-  .favoriteAction {
-    width: 100%;
+  .statusCard {
+    padding: var(--space-5);
   }
 }

@@ -28,3 +28,14 @@
 .link:focus-visible {
   background: var(--color-primary-hover);
 }
+
+@media (max-width: 32rem) {
+  .page {
+    max-width: none;
+  }
+
+  .link {
+    width: 100%;
+    justify-content: center;
+  }
+}

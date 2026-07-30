@@ -187,6 +187,7 @@
   font: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
+  min-width: 6rem;
 }
 
 .commentEditAction,
@@ -238,4 +239,38 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (max-width: 32rem) {
+  .contentSection {
+    padding: var(--space-5);
+  }
+
+  .commentsHeader,
+  .commentMeta,
+  .commentFormFooter,
+  .commentEditFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .commentForm,
+  .commentItem {
+    padding: var(--space-4);
+  }
+
+  .commentSubmit {
+    width: 100%;
+  }
+
+  .commentActions {
+    width: 100%;
+  }
+
+  .commentEditAction,
+  .commentCancelAction,
+  .commentSaveAction,
+  .commentDeleteAction {
+    flex: 1;
+  }
 }

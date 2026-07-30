@@ -176,7 +176,28 @@
 }
 
 @media (max-width: 40rem) {
-  .favoriteAction {
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .favoriteAction,
+  .secondaryAction,
+  .deleteAction {
     width: 100%;
+  }
+}
+
+@media (max-width: 32rem) {
+  .hero {
+    gap: var(--space-4);
+  }
+
+  .infoColumn {
+    gap: var(--space-3);
+  }
+
+  .title {
+    font-size: var(--font-size-2xl);
   }
 }
