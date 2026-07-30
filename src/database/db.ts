@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import type { Comment } from "../types/comment";
 import type { Favorite } from "../types/favorite";
 import type { Rating } from "../types/rating";
 import type { Recipe } from "../types/recipe";
@@ -10,6 +11,7 @@ export class RecipeHubDatabase extends Dexie {
   ratings!: Table<Rating, string>;
   users!: Table<User, string>;
   favorites!: Table<Favorite, string>;
+  comments!: Table<Comment, string>;
 
   constructor() {
     super("recipeHubDB");
@@ -29,6 +31,10 @@ export class RecipeHubDatabase extends Dexie {
 
     this.version(3).stores({
       favorites: "id, recipeId, userId, createdAt, &[recipeId+userId]",
+    });
+
+    this.version(4).stores({
+      comments: "id, recipeId, userId, createdAt",
     });
 
     this.on("populate", async () => {
