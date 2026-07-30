@@ -14,6 +14,7 @@ import useObjectUrl from "../../hooks/useObjectUrl";
 import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
 import styles from "./RecipeDetailPage.module.css";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
@@ -111,6 +112,8 @@ function RecipeDetailPage() {
       comments,
     };
   }, [recipeId, currentUser?.id]);
+
+  useDocumentTitle(detailData?.recipe.title ?? "Recipe");
 
   const imageSrc = useObjectUrl(detailData?.recipe.imageBlob);
 

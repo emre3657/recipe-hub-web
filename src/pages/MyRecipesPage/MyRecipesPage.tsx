@@ -5,8 +5,11 @@ import { db } from "../../database/db";
 import useUserSession from "../../hooks/useUserSession";
 import type { RecipePreview } from "../../types/recipe";
 import styles from "./MyRecipesPage.module.css";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 function MyRecipesPage() {
+  useDocumentTitle("My Recipes");
+
   const { currentUser, isLoading } = useUserSession();
 
   const currentUserId = currentUser?.id;

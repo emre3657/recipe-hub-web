@@ -7,8 +7,11 @@ import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
 import { RECIPE_CATEGORIES, type Recipe } from "../../types/recipe";
 import styles from "./AddRecipePage.module.css";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 function AddRecipePage() {
+  useDocumentTitle("Add Recipe");
+
   const navigate = useNavigate();
   const { currentUser } = useUserSession();
   const { showToast } = useToast();

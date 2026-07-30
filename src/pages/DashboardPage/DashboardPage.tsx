@@ -6,8 +6,11 @@ import { db } from "../../database/db";
 import useUserSession from "../../hooks/useUserSession";
 import { RECIPE_CATEGORIES, type RecipePreview } from "../../types/recipe";
 import styles from "./DashboardPage.module.css";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 function DashboardPage() {
+  useDocumentTitle("Recipes");
+
   const navigate = useNavigate();
   const { currentUser } = useUserSession();
   const [searchQuery, setSearchQuery] = useState("");

@@ -8,6 +8,7 @@ import useToast from "../../hooks/useToast";
 import useUserSession from "../../hooks/useUserSession";
 import type { Recipe } from "../../types/recipe";
 import styles from "./EditRecipePage.module.css";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 function EditRecipePage() {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ function EditRecipePage() {
 
     return (await db.recipes.get(recipeId)) ?? null;
   }, [recipeId]);
+
+  useDocumentTitle(recipe ? `Edit ${recipe.title}` : "Edit Recipe");
 
   if (!recipeId) {
     return (

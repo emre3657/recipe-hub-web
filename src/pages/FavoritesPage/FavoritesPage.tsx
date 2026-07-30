@@ -4,8 +4,11 @@ import { db } from "../../database/db";
 import useUserSession from "../../hooks/useUserSession";
 import type { RecipePreview } from "../../types/recipe";
 import styles from "./FavoritesPage.module.css";
+import useDocumentTitle from "../../hooks/useDocumentTitle";
 
 function FavoritesPage() {
+  useDocumentTitle("Favorites");
+
   const { currentUser } = useUserSession();
 
   const favoriteRecipes = useLiveQuery<RecipePreview[] | null>(async () => {
