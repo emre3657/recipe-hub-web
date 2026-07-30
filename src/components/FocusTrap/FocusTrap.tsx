@@ -31,19 +31,23 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 
 interface FocusTrapProps {
   children: ReactNode;
+  active?: boolean;
 }
 
-function FocusTrap({ children }: FocusTrapProps) {
+function FocusTrap({ children, active = true }: FocusTrapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!active) {
+      return;
+    }
+
     const container = containerRef.current;
 
     if (!container) {
       return;
     }
 
-    // Dialog açılmadan önce odakta bulunan elementi kaydet.
     const previousActiveElement =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -109,7 +113,7 @@ function FocusTrap({ children }: FocusTrapProps) {
         previousActiveElement.focus();
       }
     };
-  }, []);
+  }, [active]);
 
   return (
     <div ref={containerRef} tabIndex={-1}>
