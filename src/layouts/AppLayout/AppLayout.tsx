@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import useUserSession from "../../hooks/useUserSession";
 import FocusTrap from "../../components/FocusTrap/FocusTrap";
+import recipeHubLogo from "../../assets/recipe-hub-logo.svg";
 import styles from "./AppLayout.module.css";
 
 function AppLayout() {
@@ -60,10 +61,24 @@ function AppLayout() {
             <span aria-hidden="true">☰</span>
           </button>
 
-          <div>
-            <p className={styles.eyebrow}>Discover and cook</p>
-            <div className={styles.title}>Recipe Hub</div>
-          </div>
+          <NavLink
+            className={styles.brandLink}
+            to="/"
+            aria-label="Recipe Hub home"
+            onClick={closeNavigation}
+          >
+            <img
+              className={styles.brandMark}
+              src={recipeHubLogo}
+              alt="Recipe Hub Logo"
+              aria-hidden="true"
+            />
+
+            <span className={styles.brandText}>
+              <span className={styles.eyebrow}>Discover and cook</span>
+              <span className={styles.title}>Recipe Hub</span>
+            </span>
+          </NavLink>
         </div>
 
         <div className={styles.headerMeta}>

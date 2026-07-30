@@ -34,18 +34,56 @@
   min-width: 0;
 }
 
+.brandBlock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+
+.brandLink:hover .title {
+  color: var(--color-primary);
+}
+
+.brandLink:focus-visible {
+  outline: 0.1875rem solid var(--color-primary);
+  outline-offset: 0.1875rem;
+}
+
+.brandMark {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.brandText {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
 .eyebrow {
-  margin-bottom: var(--space-1);
   color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .title {
+  color: var(--color-text);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
+  transition: color var(--transition-fast);
 }
 
 .selectorLabel {
@@ -88,13 +126,6 @@
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-}
-
-.brandBlock {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
 }
 
 .menuButton,
@@ -219,30 +250,33 @@
     cursor: default;
   }
 
-  .sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 40;
+  @media (max-width: 48rem) {
+    .sidebar {
+      position: fixed;
+      inset: 0 0 0 auto;
+      z-index: 40;
 
-    display: block;
-    width: min(19rem, 85vw);
-    height: 100dvh;
-    padding: var(--layout-content-padding);
-    overflow-y: auto;
+      display: block;
+      width: min(19rem, 70vw);
+      height: 100dvh;
+      padding: var(--layout-content-padding);
+      overflow-y: auto;
 
-    border-right: 1px solid var(--color-border);
-    background: var(--color-surface-muted);
+      border-right: 0;
+      border-left: 1px solid var(--color-border);
+      background: var(--color-surface-muted);
 
-    transform: translateX(-100%);
-    visibility: hidden;
-    transition:
-      transform var(--transition-normal),
-      visibility var(--transition-normal);
-  }
+      transform: translateX(100%);
+      visibility: hidden;
+      transition:
+        transform var(--transition-normal),
+        visibility var(--transition-normal);
+    }
 
-  .sidebarOpen {
-    transform: translateX(0);
-    visibility: visible;
+    .sidebarOpen {
+      transform: translateX(0);
+      visibility: visible;
+    }
   }
 
   .sidebarHeader {
@@ -263,10 +297,29 @@
   }
 }
 
-@media (max-width: 32rem) {
+@media (max-width: 35rem) {
   .header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .brandBlock {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .brandMark {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+  }
+
+  .eyebrow {
+    font-size: var(--font-size-xs);
   }
 
   .headerMeta {
